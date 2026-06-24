@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volunteer Sign-In</title>
+<style>
+  :root {
+    --bg: #F6F4EF;
+    --surface: #FFFFFF;
+    --ink: #2B2A28;
+    --ink-soft: #6B6862;
+    --line: #E3DFD5;
+    --moss: #5B7561;
+    --moss-deep: #3F5544;
+    --moss-pale: #E7EDE6;
+    --clay: #B5694A;
+    --clay-pale: #F3E3DB;
+    --gold: #C9A04E;
+    --radius: 14px;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: "SF Mono", "Courier New", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+
+  header.top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  header.top h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 28px;
+    margin: 0;
+    letter-spacing: 0.2px;
+  }
+
+  header.top .clock {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--ink-soft);
+    text-align: right;
+  }
+
+  nav.tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 22px;
+    background: var(--moss-pale);
+    border-radius: 999px;
+    padding: 5px;
+    width: fit-content;
+  }
+
+  nav.tabs button {
+    border: none;
+    background: transparent;
+    font-family: var(--sans);
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--moss-deep);
+    padding: 10px 20px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  nav.tabs button.active {
+    background: var(--moss-deep);
+    color: #fff;
+  }
+
+  nav.tabs button:not(.active):hover {
+    background: rgba(63,85,68,0.1);
+  }
+
+  section { display: none; }
+  section.active { display: block; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+
+  .panel h2 {
+    font-family: var(--serif);
+    font-size: 19px;
+    margin: 0 0 16px;
+    font-weight: 600;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  input, select {
+    width: 100%;
+    font-family: var(--sans);
+    font-size: 16px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--ink);
+    margin-bottom: 14px;
+  }
+
+  input:focus, select:focus, button:focus-visible {
+    outline: 2px solid var(--moss);
+    outline-offset: 1px;
+  }
+
+  .btn {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 15px;
+    border: none;
+    border-radius: 10px;
+    padding: 13px 22px;
+    cursor: pointer;
+    transition: transform 0.08s ease, opacity 0.15s ease;
+  }
+  .btn:active { transform: scale(0.98); }
+
+  .btn-primary { background: var(--moss-deep); color: #fff; }
+  .btn-primary:hover { opacity: 0.92; }
+
+  .btn-out { background: var(--clay); color: #fff; }
+  .btn-out:hover { opacity: 0.92; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--moss-deep);
+    border: 1.5px solid var(--moss-deep);
+  }
+  .btn-ghost:hover { background: var(--moss-pale); }
+
+  .btn-danger-ghost {
+    background: transparent;
+    color: var(--clay);
+    border: 1.5px solid var(--clay);
+    font-size: 13px;
+    padding: 8px 14px;
+  }
+  .btn-danger-ghost:hover { background: var(--clay-pale); }
+
+  .roster-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .roster-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    background: var(--bg);
+  }
+
+  .roster-card.signed-in {
+    border-color: var(--moss);
+    background: var(--moss-pale);
+  }
+
+  .roster-id .name {
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .roster-id .meta {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+
+  .status-pill {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 9px;
+    border-radius: 999px;
+    margin-left: 10px;
+  }
+
+  .status-pill.in { background: var(--moss); color: #fff; }
+  .status-pill.out { background: var(--line); color: var(--ink-soft); }
+
+  .roster-actions { display: flex; gap: 8px; align-items: center; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  th {
+    text-align: left;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+    padding: 8px 10px;
+    border-bottom: 1.5px solid var(--line);
+  }
+
+  td {
+    padding: 11px 10px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .hours-badge {
+    font-family: var(--mono);
+    font-weight: 600;
+    color: var(--moss-deep);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--ink-soft);
+  }
+
+  .empty-state .icon { font-size: 32px; margin-bottom: 8px; }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .toolbar .search {
+    flex: 1;
+    min-width: 180px;
+  }
+  .toolbar .search input { margin-bottom: 0; }
+
+  .filter-row { display: flex; gap: 8px; }
+
+  .filter-row select { margin-bottom: 0; width: auto; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--moss-deep);
+    color: #fff;
+    padding: 13px 22px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14.5px;
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+    z-index: 50;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .po-card {
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    background: var(--bg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .po-card .who { font-weight: 700; }
+  .po-card .contact {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    margin-top: 3px;
+    font-family: var(--mono);
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(43,42,40,0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 24px;
+    max-width: 420px;
+    width: 100%;
+  }
+  .modal h3 {
+    font-family: var(--serif);
+    margin: 0 0 6px;
+    font-size: 19px;
+  }
+  .modal p { color: var(--ink-soft); font-size: 14px; margin: 0 0 18px; }
+  .modal .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  .loading-row { text-align: center; padding: 30px; color: var(--ink-soft); }
+
+  footer.note {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 12.5px;
+    margin-top: 30px;
+  }
+
+  @media (max-width: 600px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    header.top { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .roster-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .roster-actions { width: 100%; justify-content: flex-end; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <h1>Volunteer Sign-In</h1>
+    <div class="clock" id="clock"></div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="signin">Sign In / Out</button>
+    <button class="tab-btn" data-tab="roster">Volunteers &amp; PO Info</button>
+    <button class="tab-btn" data-tab="history">History</button>
+  </nav>
+
+  <!-- SIGN IN / OUT TAB -->
+  <section id="signin" class="active">
+    <div class="panel">
+      <h2>Currently Signed In</h2>
+      <div id="signedInList" class="roster-list">
+        <div class="loading-row">Loading…</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Sign In a Volunteer</h2>
+      <div id="signInForm">
+        <label for="signInSelect">Choose Volunteer</label>
+        <select id="signInSelect">
+          <option value="">Loading volunteers…</option>
+        </select>
+        <button class="btn btn-primary" id="signInBtn" style="width:100%;">Sign In</button>
+      </div>
+      <p style="margin-top:14px; font-size:13.5px; color:var(--ink-soft);">
+        New volunteer not on the list? Add them under the "Volunteers &amp; PO Info" tab first.
+      </p>
+    </div>
+  </section>
+
+  <!-- ROSTER / PO INFO TAB -->
+  <section id="roster">
+    <div class="panel">
+      <h2>Add a Volunteer</h2>
+      <div class="grid-2">
+        <div>
+          <label for="vName">Full Name</label>
+          <input type="text" id="vName" placeholder="e.g. James Carter">
+        </div>
+        <div>
+          <label for="vCaseNum">Case / Docket # (optional)</label>
+          <input type="text" id="vCaseNum" placeholder="e.g. 24-CF-1182">
+        </div>
+        <div>
+          <label for="vPoName">Probation Officer Name</label>
+          <input type="text" id="vPoName" placeholder="e.g. Officer D. Reyes">
+        </div>
+        <div>
+          <label for="vPoPhone">Probation Officer Phone</label>
+          <input type="tel" id="vPoPhone" placeholder="e.g. (904) 555-0148">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="addVolunteerBtn">Add Volunteer</button>
+    </div>
+
+    <div class="panel">
+      <div class="toolbar">
+        <h2 style="margin:0;">All Volunteers</h2>
+        <div class="search">
+          <input type="text" id="rosterSearch" placeholder="Search by name…">
+        </div>
+      </div>
+      <div id="rosterList" class="roster-list">
+        <div class="loading-row">Loading…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HISTORY TAB -->
+  <section id="history">
+    <div class="panel">
+      <div class="toolbar">
+        <h2 style="margin:0;">Sign-In History</h2>
+        <div class="filter-row">
+          <select id="historyVolunteerFilter">
+            <option value="">All volunteers</option>
+          </select>
+        </div>
+      </div>
+      <div id="historyTableWrap">
+        <div class="loading-row">Loading…</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Backup</h2>
+      <p style="font-size:13.5px; color:var(--ink-soft); margin-top:0; margin-bottom:16px;">
+        This information lives on this iPad only. Download a backup file regularly, and keep a copy somewhere safe (email it to yourself, or save to Files / iCloud).
+      </p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="exportBtn">Download Backup</button>
+        <label class="btn btn-ghost" for="importInput" style="display:inline-flex; align-items:center; cursor:pointer;">
+          Restore from Backup
+        </label>
+        <input type="file" id="importInput" accept="application/json" style="display:none;">
+      </div>
+    </div>
+  </section>
+
+  <footer class="note">Saved automatically on this device. This data does not leave this iPad unless you download a backup.</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="modal">
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p id="confirmBody"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="confirmCancel">Cancel</button>
+      <button class="btn btn-out" id="confirmOk">Remove</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  let volunteers = [];   // {id, name, caseNum, poName, poPhone}
+  let logs = [];         // {id, volunteerId, signInISO, signOutISO|null}
+  let pendingDelete = null;
+  let pendingEditId = null;
+  let pendingImport = null;
+
+  const STORAGE_KEY_VOLUNTEERS = 'rh_volunteers_v1';
+  const STORAGE_KEY_LOGS = 'rh_logs_v1';
+
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $all = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  function showToast(msg) {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function fmtTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+
+  function fmtDuration(startISO, endISO) {
+    const start = new Date(startISO);
+    const end = endISO ? new Date(endISO) : new Date();
+    const ms = Math.max(0, end - start);
+    const totalMin = Math.round(ms / 60000);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    if (h === 0) return m + 'm';
+    return h + 'h ' + m + 'm';
+  }
+
+  // ---------- Storage (saved directly on this device, in this browser) ----------
+  function loadData() {
+    try {
+      const v = localStorage.getItem(STORAGE_KEY_VOLUNTEERS);
+      volunteers = v ? JSON.parse(v) : [];
+    } catch (e) { volunteers = []; }
+    try {
+      const l = localStorage.getItem(STORAGE_KEY_LOGS);
+      logs = l ? JSON.parse(l) : [];
+    } catch (e) { logs = []; }
+  }
+
+  function saveVolunteers() {
+    try {
+      localStorage.setItem(STORAGE_KEY_VOLUNTEERS, JSON.stringify(volunteers));
+    } catch (e) { showToast('Could not save — device storage may be full'); }
+  }
+
+  function saveLogs() {
+    try {
+      localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs));
+    } catch (e) { showToast('Could not save — device storage may be full'); }
+  }
+
+  // ---------- Backup / Restore ----------
+  function exportBackup() {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      volunteers,
+      logs
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `volunteer-tracker-backup-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Backup file downloaded');
+  }
+
+  function importBackup(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!Array.isArray(data.volunteers) || !Array.isArray(data.logs)) {
+          throw new Error('Bad format');
+        }
+        pendingImport = data;
+        pendingDelete = null;
+        $('#confirmTitle').textContent = 'Restore this backup?';
+        $('#confirmBody').textContent = `This will replace all current data with the backup from ${data.exportedAt ? fmtTime(data.exportedAt) : 'an earlier date'}. This cannot be undone.`;
+        $('#confirmOk').textContent = 'Restore';
+        $('#confirmOverlay').classList.add('show');
+      } catch (e) {
+        showToast('That file could not be read as a backup');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // ---------- Clock ----------
+  function tickClock() {
+    const now = new Date();
+    $('#clock').textContent = now.toLocaleString(undefined, {
+      weekday: 'short', month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit', second: '2-digit'
+    });
+  }
+  setInterval(tickClock, 1000);
+  tickClock();
+
+  // refresh elapsed-time displays for anyone signed in, every 30s
+  setInterval(() => { if ($('#signin').classList.contains('active')) renderSignIn(); }, 30000);
+
+  // ---------- Tabs ----------
+  $all('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $all('.tab-btn').forEach(b => b.classList.remove('active'));
+      $all('section').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      $('#' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'history') renderHistory();
+      if (btn.dataset.tab === 'roster') renderRoster();
+      if (btn.dataset.tab === 'signin') renderSignIn();
+    });
+  });
+
+  // ---------- Sign In / Out rendering ----------
+  function activeLogFor(volunteerId) {
+    return logs.find(l => l.volunteerId === volunteerId && !l.signOutISO);
+  }
+
+  function renderSignIn() {
+    const select = $('#signInSelect');
+    const currentlyOutIds = new Set(logs.filter(l => !l.signOutISO).map(l => l.volunteerId));
+    const available = volunteers.filter(v => !currentlyOutIds.has(v.id));
+
+    if (volunteers.length === 0) {
+      select.innerHTML = '<option value="">No volunteers added yet</option>';
+    } else if (available.length === 0) {
+      select.innerHTML = '<option value="">All volunteers are signed in</option>';
+    } else {
+      select.innerHTML = '<option value="">Select a volunteer…</option>' +
+        available.map(v => `<option value="${v.id}">${escapeHtml(v.name)}</option>`).join('');
+    }
+
+    const signedIn = logs.filter(l => !l.signOutISO)
+      .map(l => ({ log: l, volunteer: volunteers.find(v => v.id === l.volunteerId) }))
+      .filter(x => x.volunteer)
+      .sort((a, b) => new Date(a.log.signInISO) - new Date(b.log.signInISO));
+
+    const list = $('#signedInList');
+    if (signedIn.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="icon">🪑</div>No one is currently signed in.</div>`;
+      return;
+    }
+
+    list.innerHTML = signedIn.map(({ log, volunteer }) => `
+      <div class="roster-card signed-in">
+        <div class="roster-id">
+          <div class="name">${escapeHtml(volunteer.name)} <span class="status-pill in">In</span></div>
+          <div class="meta">Signed in ${fmtTime(log.signInISO)} · ${fmtDuration(log.signInISO)} so far</div>
+        </div>
+        <div class="roster-actions">
+          <button class="btn btn-out" data-signout="${log.id}">Sign Out</button>
+        </div>
+      </div>
+    `).join('');
+
+    $all('[data-signout]', list).forEach(btn => {
+      btn.addEventListener('click', () => signOut(btn.dataset.signout));
+    });
+  }
+
+  function signOut(logId) {
+    const log = logs.find(l => l.id === logId);
+    if (!log) return;
+    log.signOutISO = new Date().toISOString();
+    saveLogs();
+    const v = volunteers.find(vv => vv.id === log.volunteerId);
+    showToast(`${v ? v.name : 'Volunteer'} signed out · ${fmtDuration(log.signInISO, log.signOutISO)}`);
+    renderSignIn();
+  }
+
+  $('#signInBtn').addEventListener('click', () => {
+    const id = $('#signInSelect').value;
+    if (!id) { showToast('Choose a volunteer first'); return; }
+    const v = volunteers.find(vv => vv.id === id);
+    if (activeLogFor(id)) { showToast('Already signed in'); return; }
+    logs.push({ id: uid(), volunteerId: id, signInISO: new Date().toISOString(), signOutISO: null });
+    saveLogs();
+    showToast(`${v.name} signed in`);
+    renderSignIn();
+  });
+
+  // ---------- Roster / PO info ----------
+
+  function renderRoster() {
+    const filter = ($('#rosterSearch').value || '').toLowerCase();
+    const list = $('#rosterList');
+    const currentlyInIds = new Set(logs.filter(l => !l.signOutISO).map(l => l.volunteerId));
+
+    const filtered = volunteers
+      .filter(v => v.name.toLowerCase().includes(filter))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="icon">📋</div>${volunteers.length === 0 ? 'No volunteers added yet. Add one above.' : 'No matches.'}</div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(v => {
+      const isIn = currentlyInIds.has(v.id);
+      const poLine = v.poName || v.poPhone
+        ? `PO: ${escapeHtml(v.poName || '—')} · ${escapeHtml(v.poPhone || 'no number on file')}`
+        : 'No probation officer info on file';
+      return `
+        <div class="roster-card">
+          <div class="roster-id">
+            <div class="name">${escapeHtml(v.name)} <span class="status-pill ${isIn ? 'in' : 'out'}">${isIn ? 'Signed In' : 'Signed Out'}</span></div>
+            <div class="meta">${poLine}${v.caseNum ? ' · Case # ' + escapeHtml(v.caseNum) : ''}</div>
+          </div>
+          <div class="roster-actions">
+            <button class="btn btn-ghost" data-edit="${v.id}" style="font-size:13px; padding:8px 14px;">Edit</button>
+            <button class="btn btn-danger-ghost" data-remove="${v.id}">Remove</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    $all('[data-remove]', list).forEach(btn => {
+      btn.addEventListener('click', () => askRemoveVolunteer(btn.dataset.remove));
+    });
+    $all('[data-edit]', list).forEach(btn => {
+      btn.addEventListener('click', () => editVolunteer(btn.dataset.edit));
+    });
+  }
+
+  function editVolunteer(id) {
+    const v = volunteers.find(vv => vv.id === id);
+    if (!v) return;
+    $('#vName').value = v.name;
+    $('#vCaseNum').value = v.caseNum || '';
+    $('#vPoName').value = v.poName || '';
+    $('#vPoPhone').value = v.poPhone || '';
+    pendingEditId = id;
+    $('#addVolunteerBtn').textContent = 'Save Changes';
+    $('#vName').focus();
+    $('#roster').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function askRemoveVolunteer(id) {
+    const v = volunteers.find(vv => vv.id === id);
+    if (!v) return;
+    pendingDelete = id;
+    pendingImport = null;
+    $('#confirmTitle').textContent = `Remove ${v.name}?`;
+    $('#confirmBody').textContent = 'This removes them from the volunteer list. Their past sign-in history will be kept under "History" but will show as an unlisted volunteer.';
+    $('#confirmOk').textContent = 'Remove';
+    $('#confirmOverlay').classList.add('show');
+  }
+
+  $('#confirmCancel').addEventListener('click', () => {
+    pendingDelete = null;
+    pendingImport = null;
+    $('#confirmOverlay').classList.remove('show');
+  });
+
+  $('#confirmOk').addEventListener('click', () => {
+    if (pendingImport) {
+      volunteers = pendingImport.volunteers;
+      logs = pendingImport.logs;
+      saveVolunteers();
+      saveLogs();
+      pendingImport = null;
+      $('#confirmOverlay').classList.remove('show');
+      showToast('Backup restored');
+      renderRoster();
+      renderSignIn();
+      renderHistory();
+      return;
+    }
+    if (pendingDelete) {
+      volunteers = volunteers.filter(v => v.id !== pendingDelete);
+      saveVolunteers();
+      pendingDelete = null;
+      $('#confirmOverlay').classList.remove('show');
+      showToast('Volunteer removed');
+      renderRoster();
+      renderSignIn();
+    }
+  });
+
+  $('#rosterSearch').addEventListener('input', renderRoster);
+
+  // ---------- History ----------
+  function populateHistoryFilter() {
+    const sel = $('#historyVolunteerFilter');
+    const current = sel.value;
+    const names = volunteers.slice().sort((a, b) => a.name.localeCompare(b.name));
+    sel.innerHTML = '<option value="">All volunteers</option>' +
+      names.map(v => `<option value="${v.id}">${escapeHtml(v.name)}</option>`).join('');
+    sel.value = current;
+  }
+
+  function renderHistory() {
+    populateHistoryFilter();
+    const filterId = $('#historyVolunteerFilter').value;
+    const wrap = $('#historyTableWrap');
+
+    let rows = logs.slice().sort((a, b) => new Date(b.signInISO) - new Date(a.signInISO));
+    if (filterId) rows = rows.filter(l => l.volunteerId === filterId);
+
+    if (rows.length === 0) {
+      wrap.innerHTML = `<div class="empty-state"><div class="icon">🗒️</div>No sign-in history yet.</div>`;
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr><th>Volunteer</th><th>Signed In</th><th>Signed Out</th><th>Duration</th></tr>
+        </thead>
+        <tbody>
+          ${rows.map(l => {
+            const v = volunteers.find(vv => vv.id === l.volunteerId);
+            const name = v ? v.name : '(removed volunteer)';
+            return `
+              <tr>
+                <td>${escapeHtml(name)}</td>
+                <td>${fmtTime(l.signInISO)}</td>
+                <td>${l.signOutISO ? fmtTime(l.signOutISO) : '<span class="status-pill in">Still in</span>'}</td>
+                <td class="hours-badge">${fmtDuration(l.signInISO, l.signOutISO)}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  $('#historyVolunteerFilter').addEventListener('change', renderHistory);
+
+  // ---------- Helpers ----------
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // ---------- Add / Edit Volunteer ----------
+  $('#addVolunteerBtn').addEventListener('click', () => {
+    const name = $('#vName').value.trim();
+    const caseNum = $('#vCaseNum').value.trim();
+    const poName = $('#vPoName').value.trim();
+    const poPhone = $('#vPoPhone').value.trim();
+
+    if (!name) { showToast("Enter the volunteer's name"); $('#vName').focus(); return; }
+
+    if (pendingEditId) {
+      const v = volunteers.find(vv => vv.id === pendingEditId);
+      if (v) {
+        v.name = name; v.caseNum = caseNum; v.poName = poName; v.poPhone = poPhone;
+        saveVolunteers();
+        showToast(`${name} updated`);
+      }
+      pendingEditId = null;
+      $('#addVolunteerBtn').textContent = 'Add Volunteer';
+    } else {
+      volunteers.push({ id: uid(), name, caseNum, poName, poPhone });
+      saveVolunteers();
+      showToast(`${name} added`);
+    }
+
+    $('#vName').value = ''; $('#vCaseNum').value = ''; $('#vPoName').value = ''; $('#vPoPhone').value = '';
+    renderRoster();
+    renderSignIn();
+  });
+
+  // ---------- Backup / Restore wiring ----------
+  $('#exportBtn').addEventListener('click', exportBackup);
+  $('#importInput').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) importBackup(file);
+    e.target.value = '';
+  });
+
+  // ---------- Init ----------
+  function init() {
+    loadData();
+    renderSignIn();
+    renderRoster();
+    renderHistory();
+  }
+
+  init();
+})();
+</script>
+
+</body>
+</html>
